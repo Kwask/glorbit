@@ -9,7 +9,7 @@ LINKER_FLAGS = -lglfw3 -lGL -lX11 -lXi -lXrandr -lXxf86vm -lXinerama -lXcursor -
 
 OBJS = $(FILES:.cpp=.o)
 
-LINUX_BIN = run
+LINUX_BIN = run.out
 
 #Compile(output into error.txt if there is an error), link, then run
 linux:
