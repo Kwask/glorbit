@@ -11,7 +11,7 @@ void debugging( std::string message )
 {
 	if( DEBUG )
 	{
-		std::cout << message << std::endl;
+		fprintf( stdout, "%s\n", message.c_str() );
 	}
 }
 

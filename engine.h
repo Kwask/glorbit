@@ -1,8 +1,11 @@
 #ifndef ENGINE_H
 #define ENGINE_H
 
+#include <GL/glew.h>
 #include <GLFW/glfw3.h>
+#include <string>
 #include "glfwFuncs.h"
+#include "mesh.h"
 #include "debug.h"
 
 enum class EngineState
@@ -18,31 +21,33 @@ enum class EngineState
 class Engine
 {
 private:
-	GLFWwindow* screen;
+	bool GLFWInitialized_ = false;
+
+	unsigned long long iteration_ = 0;
+
+	GLFWwindow* screen_;
 
 	EngineState status_ = EngineState::OFF;	
 
-	bool GLFWInitialized = false;
-
-	unsigned long long iteration_ = 0;
+	Mesh triangle_;
 
 public:
 	Engine();
 	~Engine();
-
+	
 	unsigned long long iteration(); // Returns the iteration of the engine
-
+	
 	EngineState status(); // Returns the status of the engine
-
+	
 	void initialize(); // Initializes variables
-	void initializeGLFW(); // Initializes GLFW, is called inside initialize();
+	void initializeGLFW(); // Initializes GLFW, is called inside initialize()
 	void start(); // Is used to start the engine, will initialize varaibles if they are not already initialized
 	void stop(); // Is used to stop the engine, will destruct variables if they are not already destructed
 	void stopGLFW(); // Stops GLFW
 	void process(); // Processes a single tick of the game
+	void pollEvents(); // Polls any events that might have happened
 	void render(); // Draws objects to the screen
 	void status( EngineState state ); // Sets the status of the engine
-
 };
 
 Engine::Engine()
@@ -76,7 +81,7 @@ void Engine::initialize()
 	debugging( "ENGINE INITIALIZING..." );
 	status( EngineState::STARTED );
 
-	GLFWInitialized = false;
+	GLFWInitialized_ = false;
 	iteration_ = 0;
 
 	initializeGLFW();
@@ -89,7 +94,7 @@ void Engine::initializeGLFW()
 {
 	debugging( "GLFW initiliazing..." );
 	//initialization code goes here
-	screen = nullptr;
+	screen_ = nullptr;
 	glfwSetErrorCallback( errorCallback );
 
 	if( !glfwInit() )
@@ -97,19 +102,40 @@ void Engine::initializeGLFW()
 		exit( EXIT_FAILURE );
 	}
 
-	screen = glfwCreateWindow( 640, 480, "Glorbit", NULL, NULL );
-	if( !screen )
+	debugging( "GLFW creating window..." );
+	screen_ = glfwCreateWindow( 640, 480, "Glorbit", 0, 0 );
+	if( !screen_ )
 	{
+		debugging( "ERROR: GLFW FAO;ED TP CREATE WINDOW" );
 		glfwTerminate();
 		exit( EXIT_FAILURE );
 	}
 
-	glfwMakeContextCurrent( screen );
+	glfwMakeContextCurrent( screen_ );
+	debugging( "GLFW successfully created the window." );
 	glfwSwapInterval(1);
 
-	glfwSetKeyCallback( screen, keyCallback );
+	glewExperimental = GL_TRUE;
+	GLenum err = glewInit();
+	if( err != GLEW_OK )
+	{
+		debugging( "ERROR: GLEW FAILED TO INITILIALIZE" );
+		glfwTerminate();
+		exit( EXIT_FAILURE );
+	}
+/*
+	std::string glew_version( "Using GLEW Version: " );
+	glew_version += glewGetString( GLEW_VERSION );
+	debugging( glew_version );
+*/
 
-	GLFWInitialized = true;
+	debugging( "Generating triangle VBO..." );
+	triangle_.generate_vertex_buffer();
+	debugging( "Generated triangle VBO." );
+
+	glfwSetKeyCallback( screen_, keyCallback );
+
+	GLFWInitialized_ = true;
 	debugging( "GLFW successfully initialized." );
 }
 
@@ -120,7 +146,6 @@ void Engine::start()
 	{
 		initialize();
 	}
-
 
 	status( EngineState::NORMAL );
 	debugging( "ENGINE STARTED." );
@@ -133,7 +158,7 @@ void Engine::stop()
 	status( EngineState::DESTRUCTING );
 
 	// destruction code goes here
-	if( GLFWInitialized )
+	if( GLFWInitialized_ )
 	{
 		stopGLFW();
 	}
@@ -145,10 +170,10 @@ void Engine::stop()
 void Engine::stopGLFW()
 {
 	debugging( "GLFW stopping..." );
-	glfwDestroyWindow( screen );
+	glfwDestroyWindow( screen_ );
 	glfwTerminate();
 
-	GLFWInitialized = false;
+	GLFWInitialized_ = false;
 	debugging( "GLFW stopped." );
 }
 
@@ -161,19 +186,26 @@ void Engine::process()
 		return;
 	}
 
-	if( glfwWindowShouldClose( screen ))
+	render();
+	pollEvents();
+}
+
+void Engine::pollEvents()
+{
+	glfwPollEvents();
+
+	if( glfwWindowShouldClose( screen_ ))
 	{
 		status( EngineState::SHOULD_QUIT );
 	}
-
-	render();
-	glfwPollEvents();
 }
 
 // Draws the game to the screen
 void Engine::render()
 {
-	glfwSwapBuffers( screen );
+	triangle_.render();
+
+	glfwSwapBuffers( screen_ );
 }
 
 // Sets the status of the game engine

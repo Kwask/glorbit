@@ -5,7 +5,7 @@ SOURCES = main.cpp
 DEPS = engine.h globe.h mesh.h point.h debug.h
 FILES = $(SOURCES) $(DEPS)
 
-LINKER_FLAGS = -lglfw3 -lGL -lX11 -lXi -lXrandr -lXxf86vm -lXinerama -lXcursor -lrt -lm -pthread
+LINKER_FLAGS = -lGLEW -lglfw3 -lGL -lX11 -lXi -lXrandr -lXxf86vm -lXinerama -lXcursor -lrt -lm -pthread
 
 OBJS = $(FILES:.cpp=.o)
 
